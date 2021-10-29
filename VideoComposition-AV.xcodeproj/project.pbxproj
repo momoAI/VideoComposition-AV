@@ -16,6 +16,10 @@
 		8E7481742727EB7800B593FF /* VideoComposition_AVTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8E7481732727EB7800B593FF /* VideoComposition_AVTests.swift */; };
 		8E74817E2727EB7800B593FF /* VideoComposition_AVUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8E74817D2727EB7800B593FF /* VideoComposition_AVUITests.swift */; };
 		8E7481802727EB7800B593FF /* VideoComposition_AVUITestsLaunchTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8E74817F2727EB7800B593FF /* VideoComposition_AVUITestsLaunchTests.swift */; };
+		8E7481912727FEC900B593FF /* CMTimeTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8E7481902727FEC900B593FF /* CMTimeTest.swift */; };
+		8E748195272B9DB000B593FF /* video1.MP4 in Resources */ = {isa = PBXBuildFile; fileRef = 8E748193272B9DB000B593FF /* video1.MP4 */; };
+		8E748196272B9DB000B593FF /* video2.MP4 in Resources */ = {isa = PBXBuildFile; fileRef = 8E748194272B9DB000B593FF /* video2.MP4 */; };
+		8E748198272B9DEB00B593FF /* AVAssetTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8E748197272B9DEB00B593FF /* AVAssetTest.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -49,6 +53,10 @@
 		8E7481792727EB7800B593FF /* VideoComposition-AVUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "VideoComposition-AVUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 		8E74817D2727EB7800B593FF /* VideoComposition_AVUITests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoComposition_AVUITests.swift; sourceTree = "<group>"; };
 		8E74817F2727EB7800B593FF /* VideoComposition_AVUITestsLaunchTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoComposition_AVUITestsLaunchTests.swift; sourceTree = "<group>"; };
+		8E7481902727FEC900B593FF /* CMTimeTest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CMTimeTest.swift; sourceTree = "<group>"; };
+		8E748193272B9DB000B593FF /* video1.MP4 */ = {isa = PBXFileReference; lastKnownFileType = file; path = video1.MP4; sourceTree = "<group>"; };
+		8E748194272B9DB000B593FF /* video2.MP4 */ = {isa = PBXFileReference; lastKnownFileType = file; path = video2.MP4; sourceTree = "<group>"; };
+		8E748197272B9DEB00B593FF /* AVAssetTest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AVAssetTest.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -106,6 +114,9 @@
 				8E7481652727EB7700B593FF /* Assets.xcassets */,
 				8E7481672727EB7700B593FF /* LaunchScreen.storyboard */,
 				8E74816A2727EB7700B593FF /* Info.plist */,
+				8E7481902727FEC900B593FF /* CMTimeTest.swift */,
+				8E748197272B9DEB00B593FF /* AVAssetTest.swift */,
+				8E748192272B9D4600B593FF /* source */,
 			);
 			path = "VideoComposition-AV";
 			sourceTree = "<group>";
@@ -125,6 +136,15 @@
 				8E74817F2727EB7800B593FF /* VideoComposition_AVUITestsLaunchTests.swift */,
 			);
 			path = "VideoComposition-AVUITests";
+			sourceTree = "<group>";
+		};
+		8E748192272B9D4600B593FF /* source */ = {
+			isa = PBXGroup;
+			children = (
+				8E748193272B9DB000B593FF /* video1.MP4 */,
+				8E748194272B9DB000B593FF /* video2.MP4 */,
+			);
+			path = source;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -192,6 +212,7 @@
 				BuildIndependentTargetsInParallel = 1;
 				LastSwiftUpdateCheck = 1300;
 				LastUpgradeCheck = 1300;
+				ORGANIZATIONNAME = "";
 				TargetAttributes = {
 					8E7481582727EB7500B593FF = {
 						CreatedOnToolsVersion = 13.0;
@@ -232,7 +253,9 @@
 			buildActionMask = 2147483647;
 			files = (
 				8E7481692727EB7700B593FF /* LaunchScreen.storyboard in Resources */,
+				8E748195272B9DB000B593FF /* video1.MP4 in Resources */,
 				8E7481662727EB7700B593FF /* Assets.xcassets in Resources */,
+				8E748196272B9DB000B593FF /* video2.MP4 in Resources */,
 				8E7481642727EB7500B593FF /* Main.storyboard in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -260,6 +283,8 @@
 			files = (
 				8E7481612727EB7500B593FF /* ViewController.swift in Sources */,
 				8E74815D2727EB7500B593FF /* AppDelegate.swift in Sources */,
+				8E7481912727FEC900B593FF /* CMTimeTest.swift in Sources */,
+				8E748198272B9DEB00B593FF /* AVAssetTest.swift in Sources */,
 				8E74815F2727EB7500B593FF /* SceneDelegate.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
