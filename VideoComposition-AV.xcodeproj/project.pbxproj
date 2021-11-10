@@ -20,6 +20,8 @@
 		8E748195272B9DB000B593FF /* video1.MP4 in Resources */ = {isa = PBXBuildFile; fileRef = 8E748193272B9DB000B593FF /* video1.MP4 */; };
 		8E748196272B9DB000B593FF /* video2.MP4 in Resources */ = {isa = PBXBuildFile; fileRef = 8E748194272B9DB000B593FF /* video2.MP4 */; };
 		8E748198272B9DEB00B593FF /* AVAssetTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8E748197272B9DEB00B593FF /* AVAssetTest.swift */; };
+		8E8620C32738C58C006BBA59 /* AVAssetTrackTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8E8620C22738C58C006BBA59 /* AVAssetTrackTest.swift */; };
+		8E8620C5273A47A8006BBA59 /* AVCompositionTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8E8620C4273A47A8006BBA59 /* AVCompositionTest.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -57,6 +59,8 @@
 		8E748193272B9DB000B593FF /* video1.MP4 */ = {isa = PBXFileReference; lastKnownFileType = file; path = video1.MP4; sourceTree = "<group>"; };
 		8E748194272B9DB000B593FF /* video2.MP4 */ = {isa = PBXFileReference; lastKnownFileType = file; path = video2.MP4; sourceTree = "<group>"; };
 		8E748197272B9DEB00B593FF /* AVAssetTest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AVAssetTest.swift; sourceTree = "<group>"; };
+		8E8620C22738C58C006BBA59 /* AVAssetTrackTest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AVAssetTrackTest.swift; sourceTree = "<group>"; };
+		8E8620C4273A47A8006BBA59 /* AVCompositionTest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AVCompositionTest.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -116,6 +120,8 @@
 				8E74816A2727EB7700B593FF /* Info.plist */,
 				8E7481902727FEC900B593FF /* CMTimeTest.swift */,
 				8E748197272B9DEB00B593FF /* AVAssetTest.swift */,
+				8E8620C22738C58C006BBA59 /* AVAssetTrackTest.swift */,
+				8E8620C4273A47A8006BBA59 /* AVCompositionTest.swift */,
 				8E748192272B9D4600B593FF /* source */,
 			);
 			path = "VideoComposition-AV";
@@ -282,10 +288,12 @@
 			buildActionMask = 2147483647;
 			files = (
 				8E7481612727EB7500B593FF /* ViewController.swift in Sources */,
+				8E8620C32738C58C006BBA59 /* AVAssetTrackTest.swift in Sources */,
 				8E74815D2727EB7500B593FF /* AppDelegate.swift in Sources */,
 				8E7481912727FEC900B593FF /* CMTimeTest.swift in Sources */,
 				8E748198272B9DEB00B593FF /* AVAssetTest.swift in Sources */,
 				8E74815F2727EB7500B593FF /* SceneDelegate.swift in Sources */,
+				8E8620C5273A47A8006BBA59 /* AVCompositionTest.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

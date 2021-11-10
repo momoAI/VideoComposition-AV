@@ -15,7 +15,11 @@ class ViewController: UIViewController {
         
 //        CMTimeTest.test()
         
-        AVAssetTest.test()
+//        AVAssetTest.test()
+        
+//        AVAssetTrackTest.test()
+        
+        AVCompositionTest.test()
         
     }
 
