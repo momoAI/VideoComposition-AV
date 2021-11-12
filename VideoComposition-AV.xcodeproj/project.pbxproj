@@ -22,6 +22,10 @@
 		8E748198272B9DEB00B593FF /* AVAssetTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8E748197272B9DEB00B593FF /* AVAssetTest.swift */; };
 		8E8620C32738C58C006BBA59 /* AVAssetTrackTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8E8620C22738C58C006BBA59 /* AVAssetTrackTest.swift */; };
 		8E8620C5273A47A8006BBA59 /* AVCompositionTest.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8E8620C4273A47A8006BBA59 /* AVCompositionTest.swift */; };
+		8E8620C7273BBD09006BBA59 /* VideoEditHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8E8620C6273BBD09006BBA59 /* VideoEditHelper.swift */; };
+		8E8620C9273BC42E006BBA59 /* image1.png in Resources */ = {isa = PBXBuildFile; fileRef = 8E8620C8273BC42E006BBA59 /* image1.png */; };
+		8E8620CB273BCD3C006BBA59 /* FileHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8E8620CA273BCD3C006BBA59 /* FileHelper.swift */; };
+		8E8620D2273E10FB006BBA59 /* video3.mp4 in Resources */ = {isa = PBXBuildFile; fileRef = 8E8620D1273E10FA006BBA59 /* video3.mp4 */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -61,6 +65,11 @@
 		8E748197272B9DEB00B593FF /* AVAssetTest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AVAssetTest.swift; sourceTree = "<group>"; };
 		8E8620C22738C58C006BBA59 /* AVAssetTrackTest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AVAssetTrackTest.swift; sourceTree = "<group>"; };
 		8E8620C4273A47A8006BBA59 /* AVCompositionTest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AVCompositionTest.swift; sourceTree = "<group>"; };
+		8E8620C6273BBD09006BBA59 /* VideoEditHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoEditHelper.swift; sourceTree = "<group>"; };
+		8E8620C8273BC42E006BBA59 /* image1.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = image1.png; sourceTree = "<group>"; };
+		8E8620CA273BCD3C006BBA59 /* FileHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileHelper.swift; sourceTree = "<group>"; };
+		8E8620CC273D148B006BBA59 /* VideoComposition-AV-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "VideoComposition-AV-Bridging-Header.h"; sourceTree = "<group>"; };
+		8E8620D1273E10FA006BBA59 /* video3.mp4 */ = {isa = PBXFileReference; lastKnownFileType = file; path = video3.mp4; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -122,7 +131,10 @@
 				8E748197272B9DEB00B593FF /* AVAssetTest.swift */,
 				8E8620C22738C58C006BBA59 /* AVAssetTrackTest.swift */,
 				8E8620C4273A47A8006BBA59 /* AVCompositionTest.swift */,
+				8E8620C6273BBD09006BBA59 /* VideoEditHelper.swift */,
+				8E8620CA273BCD3C006BBA59 /* FileHelper.swift */,
 				8E748192272B9D4600B593FF /* source */,
+				8E8620CC273D148B006BBA59 /* VideoComposition-AV-Bridging-Header.h */,
 			);
 			path = "VideoComposition-AV";
 			sourceTree = "<group>";
@@ -149,6 +161,8 @@
 			children = (
 				8E748193272B9DB000B593FF /* video1.MP4 */,
 				8E748194272B9DB000B593FF /* video2.MP4 */,
+				8E8620D1273E10FA006BBA59 /* video3.mp4 */,
+				8E8620C8273BC42E006BBA59 /* image1.png */,
 			);
 			path = source;
 			sourceTree = "<group>";
@@ -222,6 +236,7 @@
 				TargetAttributes = {
 					8E7481582727EB7500B593FF = {
 						CreatedOnToolsVersion = 13.0;
+						LastSwiftMigration = 1300;
 					};
 					8E74816E2727EB7800B593FF = {
 						CreatedOnToolsVersion = 13.0;
@@ -261,8 +276,10 @@
 				8E7481692727EB7700B593FF /* LaunchScreen.storyboard in Resources */,
 				8E748195272B9DB000B593FF /* video1.MP4 in Resources */,
 				8E7481662727EB7700B593FF /* Assets.xcassets in Resources */,
+				8E8620C9273BC42E006BBA59 /* image1.png in Resources */,
 				8E748196272B9DB000B593FF /* video2.MP4 in Resources */,
 				8E7481642727EB7500B593FF /* Main.storyboard in Resources */,
+				8E8620D2273E10FB006BBA59 /* video3.mp4 in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -289,9 +306,11 @@
 			files = (
 				8E7481612727EB7500B593FF /* ViewController.swift in Sources */,
 				8E8620C32738C58C006BBA59 /* AVAssetTrackTest.swift in Sources */,
+				8E8620CB273BCD3C006BBA59 /* FileHelper.swift in Sources */,
 				8E74815D2727EB7500B593FF /* AppDelegate.swift in Sources */,
 				8E7481912727FEC900B593FF /* CMTimeTest.swift in Sources */,
 				8E748198272B9DEB00B593FF /* AVAssetTest.swift in Sources */,
+				8E8620C7273BBD09006BBA59 /* VideoEditHelper.swift in Sources */,
 				8E74815F2727EB7500B593FF /* SceneDelegate.swift in Sources */,
 				8E8620C5273A47A8006BBA59 /* AVCompositionTest.swift in Sources */,
 			);
@@ -470,11 +489,13 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = R45LY736NP;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "VideoComposition-AV/Info.plist";
+				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "save video";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
 				INFOPLIST_KEY_UIMainStoryboardFile = Main;
@@ -488,6 +509,8 @@
 				PRODUCT_BUNDLE_IDENTIFIER = "fxr.VideoComposition-AV";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OBJC_BRIDGING_HEADER = "VideoComposition-AV/VideoComposition-AV-Bridging-Header.h";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
@@ -498,11 +521,13 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CLANG_ENABLE_MODULES = YES;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = R45LY736NP;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = "VideoComposition-AV/Info.plist";
+				INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription = "save video";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
 				INFOPLIST_KEY_UIMainStoryboardFile = Main;
@@ -516,6 +541,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = "fxr.VideoComposition-AV";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OBJC_BRIDGING_HEADER = "VideoComposition-AV/VideoComposition-AV-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};
