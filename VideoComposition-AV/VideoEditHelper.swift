@@ -16,6 +16,7 @@ typealias VideoResult = (Bool, Error?) -> Void
 
 struct VideoEditHelper {
     
+    static let renderSize: CGSize = CGSize(width: 720, height: 1280)
     static let timescale: CMTimeScale = 600
     
     /// 合成视频
@@ -41,8 +42,16 @@ struct VideoEditHelper {
                     do {
                         try videoCompositionTrack?.insertTimeRange(CMTimeRange(start: .zero, duration: insertVideoTime.duration), of: insertVideoTrack, at: insertTime)
                         
+                        var trans = insertVideoTrack.preferredTransform
                         let vcLayerInstruction = AVMutableVideoCompositionLayerInstruction(assetTrack: insertVideoTrack)
-                        vcLayerInstruction.setTransform(insertVideoTrack.preferredTransform, at: insertTime)
+                        let size = insertVideoTrack.naturalSize
+                        if size.width / size.height > 1 {
+                            let scale = renderSize.width / size.width
+                            let height = scale * renderSize.height
+                            trans = CGAffineTransform(a: insertVideoTrack.preferredTransform.a * scale, b: insertVideoTrack.preferredTransform.b * scale, c: insertVideoTrack.preferredTransform.c * scale, d: insertVideoTrack.preferredTransform.d * scale, tx: insertVideoTrack.preferredTransform.tx * scale, ty: insertVideoTrack.preferredTransform.ty * scale + (renderSize.height - height) / 2)
+                        }
+                        
+                        vcLayerInstruction.setTransform(trans, at: insertTime)
                         layerInstructions.append(vcLayerInstruction)
                     } catch let e {
                         callback(false, e)
@@ -64,17 +73,19 @@ struct VideoEditHelper {
         
         let videoComposition = AVMutableVideoComposition()
         videoComposition.frameDuration = CMTime(value: 1, timescale: 30)
-        videoComposition.renderSize = composition.naturalSize
+        videoComposition.renderSize = renderSize
         let vcInstruction = AVMutableVideoCompositionInstruction()
         vcInstruction.timeRange = CMTimeRange(start: .zero, duration: composition.duration)
         vcInstruction.backgroundColor = UIColor.red.cgColor
         vcInstruction.layerInstructions = layerInstructions
         videoComposition.instructions = [vcInstruction]
         
-        guard let exportSession = AVAssetExportSession(asset: composition, presetName: AVAssetExportPresetHighestQuality) else {
+        guard let exportSession = AVAssetExportSession(asset: composition, presetName: AVAssetExportPreset1280x720) else {
             callback(false, nil)
             return
         }
+        
+        exportSession.videoComposition = videoComposition
         
         exportVideo(exportSession, outputUrl, callback)
     }
@@ -127,7 +138,66 @@ struct VideoEditHelper {
             }
         }
         
+        // 多个视频为720 1280的使用 AVAssetExportPresetMediumQuality/AVAssetExportPresetLowQuality 报错：Code=-11821 "Cannot Decode"
         exportVideo(composition, AVAssetExportPresetPassthrough, outputUrl, callback)
+    }
+    
+    /// 视频添加音频轨道
+    /// - Parameters:
+    ///   - videoUrl: 视频
+    ///   - audioUrl: 音频
+    ///   - outputUrl: 合成后路径
+    ///   - removeOriginalAudio: 是否删除原音频 默认false
+    ///   - callback: 结果
+    public static func addAudio(videoUrl: URL, audioUrl: URL, outputUrl: URL, removeOriginalAudio: Bool = false, callback: @escaping VideoResult) {
+        var audioParameters: [AVMutableAudioMixInputParameters] = []
+        let asset = AVURLAsset(url: videoUrl)
+        let composition = AVMutableComposition()
+        do {
+            try composition.insertTimeRange(CMTimeRange(start: .zero, duration: asset.duration), of: asset, at: .zero)
+        } catch let e {
+            callback(false, e)
+            return
+        }
+
+        let tracks = composition.tracks(withMediaType: .audio)
+        for track in tracks {
+            if removeOriginalAudio {
+                composition.removeTrack(track)
+            } else {
+                let adParameter = AVMutableAudioMixInputParameters(track: track)
+                adParameter.setVolume(0.5, at: .zero)
+                audioParameters.append(adParameter)
+            }
+        }
+        
+        let audioAsset = AVURLAsset(url: audioUrl)
+        let audioCompositionTrack = composition.addMutableTrack(withMediaType: .audio, preferredTrackID: kCMPersistentTrackID_Invalid)
+        let audioTracks = audioAsset.tracks(withMediaType: .audio)
+        for audioTrack in audioTracks {
+            let adParameter = AVMutableAudioMixInputParameters(track: audioTrack)
+            adParameter.setVolume(1, at: .zero)
+            audioParameters.append(adParameter)
+            
+            do {
+                try audioCompositionTrack?.insertTimeRange(audioTrack.timeRange, of: audioTrack, at: .zero)
+            } catch let e {
+                callback(false, e)
+                return
+            }
+        }
+        
+        // AVAssetExportPresetPassthrough报错：Code=-11838 "Operation Stopped"
+        guard let exportSession = AVAssetExportSession(asset: composition, presetName: AVAssetExportPresetMediumQuality) else {
+            callback(false, nil)
+            return
+        }
+        // 调节音频
+        let audioMix = AVMutableAudioMix()
+        audioMix.inputParameters = audioParameters
+        exportSession.audioMix = audioMix
+        
+        exportVideo(exportSession, outputUrl, callback)
     }
     
     /// 多张图片合成视频
@@ -140,15 +210,16 @@ struct VideoEditHelper {
     ///   - url: 视频url
     ///   - outputUrl: 保存路径
     ///   - type：类型
-    ///   - callback: 返回
-    public static func removeTrack(url: URL, outputUrl: URL, type: AVMediaType, callback: @escaping VideoResult) {
+    ///   - exportback: 导出回调 为nil不导出
+    /// - Returns: 合成后的Composition
+    public static func removeTrack(url: URL, outputUrl: URL, type: AVMediaType, exportback: VideoResult? = nil) -> AVMutableComposition? {
         let asset = AVURLAsset(url: url)
         let composition = AVMutableComposition()
         do {
             try composition.insertTimeRange(CMTimeRange(start: .zero, duration: asset.duration), of: asset, at: .zero)
         } catch let e {
-            callback(false, e)
-            return
+            exportback?(false, e)
+            return nil
         }
         
         let tracks = composition.tracks(withMediaType: type)
@@ -156,7 +227,9 @@ struct VideoEditHelper {
             composition.removeTrack(track)
         }
         
-        exportVideo(composition, AVAssetExportPresetPassthrough, outputUrl, callback)
+        exportVideo(composition, AVAssetExportPresetPassthrough, outputUrl, exportback)
+        
+        return composition
     }
     
     /// 裁剪视频
@@ -203,6 +276,7 @@ struct VideoEditHelper {
         }
     }
     
+    /// 保存视频到相册
     public static func saveVideo(_ url: URL, callback: @escaping VideoResult) {
         let photoLibrary = PHPhotoLibrary.shared()
         photoLibrary.performChanges {
@@ -228,11 +302,12 @@ struct VideoEditHelper {
         }
     }
     
-    fileprivate static func exportVideo(_ asset: AVAsset, _ presetName: String, _ outputUrl: URL, _ callback: @escaping VideoResult) {
+    fileprivate static func exportVideo(_ asset: AVAsset, _ presetName: String, _ outputUrl: URL, _ callback: VideoResult? = nil) {
         guard let exportSession = AVAssetExportSession(asset: asset, presetName: presetName) else {
-            callback(false, nil)
+            callback?(false, nil)
             return
         }
+        print(AVAssetExportSession.exportPresets(compatibleWith: asset))
         
         exportSession.outputFileType = .mp4
         exportSession.outputURL = outputUrl
@@ -240,10 +315,36 @@ struct VideoEditHelper {
         exportSession.exportAsynchronously {
             switch exportSession.status {
                 case .completed:
-                    callback(true, nil)
+                    callback?(true, nil)
                 default:
-                    callback(false, exportSession.error)
+                    callback?(false, exportSession.error)
             }
         }
     }
+    
+    /// 获取视频方向
+    fileprivate static func orientationFromVideo(assetTrack: AVAssetTrack) -> VideoOrientation {
+        var orientation: VideoOrientation = .landscapeRight
+        let t = assetTrack.preferredTransform
+        if t.a == 0 && t.b == 1.0 && t.c == -1.0 && t.d == 0 {
+            orientation = .portrait
+        } else if t.a == 0 && t.b == -1.0 && t.c == 1.0 && t.d == 0 {
+            orientation = .portraitUpsideDown
+        } else if t.a == 1.0 && t.b == 0 && t.c == 0 && t.d == 1.0 {
+            orientation = .landscapeRight
+        } else if t.a == -1.0 && t.b == 0 && t.c == 0 && t.d == -1.0 {
+            // LandscapeLeft
+            orientation = .landscapeLeft
+        }
+        return orientation
+    }
+}
+
+
+enum VideoOrientation: Int {
+    // rawvalue 对应角度
+    case landscapeRight = 0
+    case portrait = 90
+    case landscapeLeft = 180
+    case portraitUpsideDown = 270
 }

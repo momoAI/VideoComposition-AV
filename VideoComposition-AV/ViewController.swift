@@ -37,9 +37,14 @@ class ViewController: UIViewController {
         let ai3 = Bundle.main.url(forResource: "video3.mp4", withExtension: nil)
         guard let url1 = ai1, let url2 = ai2, let url3 = ai3 else { return }
         
-//        VideoEditHelper.compositeVideos(urls: url1, url2, url3, outputUrl: outputUrl) { success, error in
+//        VideoEditHelper.compositeVideosDefault(urls: url1, url2, url3, outputUrl: outputUrl) { success, error in
 //
 //        }
+        
+        
+        VideoEditHelper.compositeVideos(urls: url3, outputUrl: outputUrl) { success, error in
+
+        }
         
 //        VideoEditHelper.removeTrack(url: url1, outputUrl: outputUrl, type: .audio) { success, error in
 //
@@ -52,6 +57,11 @@ class ViewController: UIViewController {
 //        }
         
 //        VideoEditHelper.saveVideo(url1) { suc, err in
+//
+//        }
+        
+//        guard let audioUrl = Bundle.main.url(forResource: "audio1.mp3", withExtension: nil) else { return }
+//        VideoEditHelper.addAudio(videoUrl: url1, audioUrl: audioUrl, outputUrl: outputUrl, removeOriginalAudio: false) { suc, err in
 //
 //        }
         
