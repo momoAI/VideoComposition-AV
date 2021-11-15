@@ -34,7 +34,8 @@ class ViewController: UIViewController {
         guard let outputUrl = videoUrl?.appendingPathComponent(FileHelper.uuid() + ".mp4") else { return }
         let ai1 = Bundle.main.url(forResource: "video1.MP4", withExtension: nil)
         let ai2 = Bundle.main.url(forResource: "video2.MP4", withExtension: nil)
-        let ai3 = Bundle.main.url(forResource: "video3.mp4", withExtension: nil)
+//        let ai3 = Bundle.main.url(forResource: "video3.mp4", withExtension: nil)
+        let ai3 = Bundle.main.url(forResource: "landscapeRight.MOV", withExtension: nil)
         guard let url1 = ai1, let url2 = ai2, let url3 = ai3 else { return }
         
 //        VideoEditHelper.compositeVideosDefault(urls: url1, url2, url3, outputUrl: outputUrl) { success, error in
@@ -42,9 +43,9 @@ class ViewController: UIViewController {
 //        }
         
         
-        VideoEditHelper.compositeVideos(urls: url3, outputUrl: outputUrl) { success, error in
-
-        }
+//        VideoEditHelper.compositeVideos(urls: url3, outputUrl: outputUrl) { success, error in
+//
+//        }
         
 //        VideoEditHelper.removeTrack(url: url1, outputUrl: outputUrl, type: .audio) { success, error in
 //

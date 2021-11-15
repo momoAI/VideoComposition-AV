@@ -26,10 +26,17 @@ struct VideoEditHelper {
     ///   - callback: 合成结果
     public static func compositeVideos(urls: URL..., outputUrl: URL, callback: @escaping VideoResult) {
         let composition = AVMutableComposition()
-        let videoCompositionTrack = composition.addMutableTrack(withMediaType: .video, preferredTrackID: kCMPersistentTrackID_Invalid)
+        guard let videoCompositionTrack = composition.addMutableTrack(withMediaType: .video, preferredTrackID: kCMPersistentTrackID_Invalid) else {
+            callback(false, nil)
+            return
+        }
         let audioCompositionTrack = composition.addMutableTrack(withMediaType: .audio, preferredTrackID: kCMPersistentTrackID_Invalid)
+        
+        // layerInstruction 用于更改视频图层
+        let vcLayerInstruction = AVMutableVideoCompositionLayerInstruction(assetTrack: videoCompositionTrack)
+        var layerInstructions = [vcLayerInstruction]
+        
         var insertTime = CMTime.zero
-        var layerInstructions: [AVMutableVideoCompositionLayerInstruction] = []
         for url in urls {
             autoreleasepool {
                 let asset = AVURLAsset(url: url)
@@ -40,15 +47,33 @@ struct VideoEditHelper {
                 
                 if let insertVideoTrack = videoTrack, let insertVideoTime = videoTimeRange {
                     do {
-                        try videoCompositionTrack?.insertTimeRange(CMTimeRange(start: .zero, duration: insertVideoTime.duration), of: insertVideoTrack, at: insertTime)
+                        try videoCompositionTrack.insertTimeRange(CMTimeRange(start: .zero, duration: insertVideoTime.duration), of: insertVideoTrack, at: insertTime)
                         
+                        // 更改Transform 调整方向、大小
                         var trans = insertVideoTrack.preferredTransform
-                        let vcLayerInstruction = AVMutableVideoCompositionLayerInstruction(assetTrack: insertVideoTrack)
                         let size = insertVideoTrack.naturalSize
-                        if size.width / size.height > 1 {
-                            let scale = renderSize.width / size.width
-                            let height = scale * renderSize.height
-                            trans = CGAffineTransform(a: insertVideoTrack.preferredTransform.a * scale, b: insertVideoTrack.preferredTransform.b * scale, c: insertVideoTrack.preferredTransform.c * scale, d: insertVideoTrack.preferredTransform.d * scale, tx: insertVideoTrack.preferredTransform.tx * scale, ty: insertVideoTrack.preferredTransform.ty * scale + (renderSize.height - height) / 2)
+                        let orientation = orientationFromVideo(assetTrack: insertVideoTrack)
+                        switch orientation {
+                            case .portrait:
+                                let scale = renderSize.height / size.width
+                                trans = CGAffineTransform(scaleX: scale, y: scale)
+                                trans = trans.translatedBy(x: size.height, y: 0)
+                                trans = trans.rotated(by: .pi / 2.0)
+                            case .landscapeLeft:
+                                let scale = renderSize.width / size.width
+                                trans = CGAffineTransform(scaleX: scale, y: scale)
+                                trans = trans.translatedBy(x: size.width, y: size.height + (renderSize.height - size.height * scale) / scale / 2.0)
+                                trans = trans.rotated(by: .pi)
+                            case .portraitUpsideDown:
+                                let scale = renderSize.height / size.width
+                                trans = CGAffineTransform(scaleX: scale, y: scale)
+                                trans = trans.translatedBy(x: 0, y: size.width)
+                                trans = trans.rotated(by: .pi / 2.0 * 3)
+                            case .landscapeRight:
+                                // 默认方向
+                                let scale = renderSize.width / size.width
+                                trans = CGAffineTransform(scaleX: scale, y: scale)
+                                trans = trans.translatedBy(x: 0, y: (renderSize.height - size.height * scale) / scale / 2.0)
                         }
                         
                         vcLayerInstruction.setTransform(trans, at: insertTime)
@@ -72,11 +97,12 @@ struct VideoEditHelper {
         }
         
         let videoComposition = AVMutableVideoComposition()
+        // videoComposition必须指定 帧率frameDuration、大小renderSize
         videoComposition.frameDuration = CMTime(value: 1, timescale: 30)
         videoComposition.renderSize = renderSize
         let vcInstruction = AVMutableVideoCompositionInstruction()
         vcInstruction.timeRange = CMTimeRange(start: .zero, duration: composition.duration)
-        vcInstruction.backgroundColor = UIColor.red.cgColor
+        vcInstruction.backgroundColor = UIColor.red.cgColor // 可以设置视频背景颜色
         vcInstruction.layerInstructions = layerInstructions
         videoComposition.instructions = [vcInstruction]
         
@@ -96,26 +122,35 @@ struct VideoEditHelper {
     ///   - outputUrl: 指定合成后视频存储路径（之后通过该路径获取视频）
     ///   - callback: 合成结果
     public static func compositeVideosDefault(urls: URL..., outputUrl: URL, callback: @escaping VideoResult) {
+        // 创建资源集合composition及可编辑轨道
         let composition = AVMutableComposition()
-        let videoCompositionTrack = composition.addMutableTrack(withMediaType: .video, preferredTrackID: kCMPersistentTrackID_Invalid)
+        // 视频轨道
+        let videoCompositionTrack = composition.addMutableTrack(withMediaType: .video, preferredTrackID: kCMPersistentTrackID_Invalid) // kCMPersistentTrackID_Invalid 自动创建随机ID
+        // 音频轨道
         let audioCompositionTrack = composition.addMutableTrack(withMediaType: .audio, preferredTrackID: kCMPersistentTrackID_Invalid)
+        
         var insertTime = CMTime.zero
         for url in urls {
             autoreleasepool {
+                // 获取视频资源 并分离出视频、音频轨道
                 let asset = AVURLAsset(url: url)
                 let videoTrack = asset.tracks(withMediaType: .video).first
                 let audioTrack = asset.tracks(withMediaType: .audio).first
                 let videoTimeRange = videoTrack?.timeRange
                 let audioTimeRange = audioTrack?.timeRange
                 
+                // 将多个视频轨道合到一个轨道上（AVMutableCompositionTrack）
                 if let insertVideoTrack = videoTrack, let insertVideoTime = videoTimeRange {
                     do {
+                        // 在某个时间点插入轨道
                         try videoCompositionTrack?.insertTimeRange(CMTimeRange(start: .zero, duration: insertVideoTime.duration), of: insertVideoTrack, at: insertTime)
                     } catch let e {
                         callback(false, e)
                         return
                     }
                 }
+                
+                // 将多个音频轨道合到一个轨道上（AVMutableCompositionTrack）
                 if let insertAudioTrack = audioTrack, let insertAudioTime = audioTimeRange {
                     do {
                         try audioCompositionTrack?.insertTimeRange(CMTimeRange(start: .zero, duration: insertAudioTime.duration), of: insertAudioTrack, at: insertTime)
