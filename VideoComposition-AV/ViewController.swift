@@ -66,6 +66,12 @@ class ViewController: UIViewController {
 //
 //        }
         
+//        guard let wmImage = UIImage(named: "image1") else { return }
+//        VideoEditHelper.addWatermark(videoUrl: url1, wmImage: wmImage, wmText: "I'm water text", wmframe: CGRect(x: 0, y: 100, width: 200, height: 100), outputUrl: outputUrl) { suc, err in
+//            VideoEditHelper.saveVideo(outputUrl) { suc2, err2 in
+//
+//            }
+//        }
     }
 
 }

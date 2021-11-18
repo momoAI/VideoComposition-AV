@@ -322,6 +322,100 @@ struct VideoEditHelper {
     }
     
     
+    /// 添加水印
+    /// - Parameters:
+    ///   - videoUrl: 视频url
+    ///   - wmImage: 水印图片
+    ///   - wmText: 水印文字
+    ///   - wmframe: 水印位置大小
+    ///   - outputUrl: 输出路径
+    ///   - callback: 返回
+    public static func addWatermark(videoUrl: URL, wmImage: UIImage, wmText: String, wmframe: CGRect, outputUrl: URL, callback: @escaping VideoResult) {
+        let asset = AVURLAsset(url: videoUrl)
+        let composition = AVMutableComposition()
+        do {
+            try composition.insertTimeRange(CMTimeRange(start: .zero, duration: asset.duration), of: asset, at: .zero)
+        } catch let e {
+            callback(false, e)
+            return
+        }
+        
+        guard let videoCompositionTrack = composition.tracks(withMediaType: .video).first else {
+            callback(false, nil)
+            return
+        }
+        
+        // instructions
+        var trans = videoCompositionTrack.preferredTransform
+        let size = videoCompositionTrack.naturalSize
+        let orientation = orientationFromVideo(assetTrack: videoCompositionTrack)
+        switch orientation {
+            case .portrait:
+                trans = CGAffineTransform(translationX: size.height, y: 0)
+                trans = trans.rotated(by: .pi / 2.0)
+            case .landscapeLeft:
+                trans = CGAffineTransform(translationX: size.width, y: size.height)
+                trans = trans.rotated(by: .pi)
+            case .portraitUpsideDown:
+                trans = CGAffineTransform(translationX: 0, y: size.width)
+                trans = trans.rotated(by: .pi / 2.0 * 3)
+            case .landscapeRight:
+                // 默认方向
+                break
+        }
+        
+        let vcLayerInstruction = AVMutableVideoCompositionLayerInstruction(assetTrack: videoCompositionTrack)
+        vcLayerInstruction.setTransform(trans, at: .zero)
+        let videoComposition = AVMutableVideoComposition()
+        videoComposition.frameDuration = CMTime(value: 1, timescale: 30)
+        videoComposition.renderSize = composition.naturalSize
+        let vcInstruction = AVMutableVideoCompositionInstruction()
+        vcInstruction.timeRange = CMTimeRange(start: .zero, duration: composition.duration)
+        vcInstruction.layerInstructions = [vcLayerInstruction]
+        videoComposition.instructions = [vcInstruction]
+        
+        // animationTool
+        let renderFrame = CGRect(origin: .zero, size: size)
+        let imageLayer = CALayer()
+        let textLayer = CATextLayer()
+        let watermarkLayer = CALayer()
+        let videoLayer = CALayer()
+        let animationLayer = CALayer()
+        
+        // 水印layer 可以包含多个图层
+        watermarkLayer.frame = wmframe
+        imageLayer.frame = watermarkLayer.bounds
+        imageLayer.contents = wmImage.cgImage
+        textLayer.frame = watermarkLayer.bounds
+        textLayer.string = wmText
+        textLayer.foregroundColor = UIColor.red.cgColor
+        textLayer.fontSize = 30
+        watermarkLayer.addSublayer(imageLayer)
+        watermarkLayer.addSublayer(textLayer)
+        watermarkLayer.masksToBounds = true
+        watermarkLayer.backgroundColor = UIColor.red.cgColor
+        
+        // 视频layer
+        videoLayer.frame = renderFrame
+        
+        // core animation layer
+        animationLayer.frame = renderFrame
+        animationLayer.addSublayer(videoLayer)
+        animationLayer.addSublayer(watermarkLayer)
+        
+        let animationTool = AVVideoCompositionCoreAnimationTool(postProcessingAsVideoLayer: videoLayer, in: animationLayer)
+        videoComposition.animationTool = animationTool
+        
+        guard let exportSession = AVAssetExportSession(asset: composition, presetName: AVAssetExportPreset1280x720) else {
+            callback(false, nil)
+            return
+        }
+        
+        exportSession.videoComposition = videoComposition
+        
+        exportVideo(exportSession, outputUrl, callback)
+    }
+    
     // MARK: --private
     fileprivate static func exportVideo(_ exportSession: AVAssetExportSession, _ outputUrl: URL, _ callback: @escaping VideoResult) {
         exportSession.outputFileType = .mp4
