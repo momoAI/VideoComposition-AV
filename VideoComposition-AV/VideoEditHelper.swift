@@ -2,7 +2,7 @@
 //  VideoEditHelper.swift
 //  VideoComposition-AV
 //
-//  Created by luxu on 2021/11/10.
+//  Created by momo on 2021/11/10.
 //
 
 import Foundation
@@ -447,7 +447,7 @@ struct VideoEditHelper {
     }
     
     /// 获取视频方向
-    fileprivate static func orientationFromVideo(assetTrack: AVAssetTrack) -> VideoOrientation {
+    public static func orientationFromVideo(assetTrack: AVAssetTrack) -> VideoOrientation {
         var orientation: VideoOrientation = .landscapeRight
         let t = assetTrack.preferredTransform
         if t.a == 0 && t.b == 1.0 && t.c == -1.0 && t.d == 0 {
@@ -463,137 +463,6 @@ struct VideoEditHelper {
         return orientation
     }
 }
-
-// MARK: - AVAsssetReader/AVAsssetWriter output/input
-extension VideoEditHelper {
-    /// 多个视频数据合成一个视频 （通过reader/writer方式）
-    public static func writeVideo(urls: URL..., outputUrl: URL, callback: @escaping VideoResult) {
-        // 创建资源集合composition及可编辑轨道
-        let composition = AVMutableComposition()
-        // 视频轨道
-        let videoCompositionTrack = composition.addMutableTrack(withMediaType: .video, preferredTrackID: kCMPersistentTrackID_Invalid)
-        // 音频轨道
-        let audioCompositionTrack = composition.addMutableTrack(withMediaType: .audio, preferredTrackID: kCMPersistentTrackID_Invalid)
-        
-        var insertTime = CMTime.zero
-        for url in urls {
-            autoreleasepool {
-                // 获取视频资源 并分离出视频、音频轨道
-                let asset = AVURLAsset(url: url)
-                let videoTrack = asset.tracks(withMediaType: .video).first
-                let audioTrack = asset.tracks(withMediaType: .audio).first
-                let videoTimeRange = videoTrack?.timeRange
-                let audioTimeRange = audioTrack?.timeRange
-                
-                // 将多个视频轨道合到一个轨道上（AVMutableCompositionTrack）
-                if let insertVideoTrack = videoTrack, let insertVideoTime = videoTimeRange {
-                    do {
-                        // 在某个时间点插入轨道
-                        try videoCompositionTrack?.insertTimeRange(CMTimeRange(start: .zero, duration: insertVideoTime.duration), of: insertVideoTrack, at: insertTime)
-                    } catch let e {
-                        callback(false, e)
-                        return
-                    }
-                }
-                
-                // 将多个音频轨道合到一个轨道上（AVMutableCompositionTrack）
-                if let insertAudioTrack = audioTrack, let insertAudioTime = audioTimeRange {
-                    do {
-                        try audioCompositionTrack?.insertTimeRange(CMTimeRange(start: .zero, duration: insertAudioTime.duration), of: insertAudioTrack, at: insertTime)
-                    } catch let e {
-                        callback(false, e)
-                        return
-                    }
-                }
-                
-                insertTime = insertTime + asset.duration
-            }
-        }
-        
-        // -----读取数据----
-        let videoTracks = composition.tracks(withMediaType: .video)
-        let audioTracks = composition.tracks(withMediaType: .audio)
-        
-        // AVAssetReader
-        var reader: AVAssetReader
-        do {
-            reader = try AVAssetReader(asset: composition)
-        } catch let e {
-            callback(false, e)
-            return
-        }
-        reader.timeRange = CMTimeRange(start: .zero, duration: composition.duration)
-        
-        // AVAssetReaderOutput
-        let videoOutput = AVAssetReaderVideoCompositionOutput(videoTracks: videoTracks, videoSettings: nil)
-        videoOutput.alwaysCopiesSampleData = false
-        if reader.canAdd(videoOutput) {
-            reader.add(videoOutput)
-        }
-        
-        let audioOutput = AVAssetReaderAudioMixOutput(audioTracks: audioTracks, audioSettings: nil)
-        audioOutput.alwaysCopiesSampleData = false
-        if reader.canAdd(audioOutput) {
-            reader.add(audioOutput)
-        }
-        
-        reader.startReading()
-        
-        // -----写数据----
-        // AVAssetWriter
-        var writer: AVAssetWriter
-        do {
-            writer = try AVAssetWriter(outputURL: outputUrl, fileType: .mp4)
-        } catch let e {
-            callback(false, e)
-            return
-        }
-        writer.shouldOptimizeForNetworkUse = true
-        
-        // AVAssetWriterInput
-        let videoInput = AVAssetWriterInput(mediaType: .video, outputSettings: nil)
-        if writer.canAdd(videoInput) {
-            writer.add(videoInput)
-        }
-        
-        let audioInput = AVAssetWriterInput(mediaType: .audio, outputSettings: nil)
-        if writer.canAdd(audioInput) {
-            writer.add(audioInput)
-        }
-        
-        writer.startWriting()
-        writer.startSession(atSourceTime: .zero)
-        
-        // 准备写入数据
-        let inputQueue = DispatchQueue(label: "VideoInputQueue")
-        videoInput.requestMediaDataWhenReady(on: inputQueue) {
-            encodeReadySamples(from: videoOutput, to: videoInput)
-        }
-        
-        audioInput.requestMediaDataWhenReady(on: inputQueue) {
-            encodeReadySamples(from: audioOutput, to: audioInput)
-        }
-    }
-    
-    /// 多张图片合成视频
-    public static func compositeVideo(images: UIImage..., outputUrl: URL, callback: @escaping VideoResult) {
-        
-    }
-    
-    fileprivate static func encodeReadySamples(from output: AVAssetReaderOutput, to input: AVAssetWriterInput) -> Bool {
-        while input.isReadyForMoreMediaData {
-            guard let sampleBuffer = output.copyNextSampleBuffer() else {
-                input.markAsFinished()
-                return false
-            }
-            
-            return input.append(sampleBuffer)
-        }
-        
-        return true
-    }
-}
-
 
 // MARK: - ENUM
 enum VideoOrientation: Int {

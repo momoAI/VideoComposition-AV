@@ -32,6 +32,7 @@
 		8E93332F27410AD400659A8A /* landscapeLeft.MOV in Resources */ = {isa = PBXBuildFile; fileRef = 8E93332E27410AD400659A8A /* landscapeLeft.MOV */; };
 		8E9333312742573A00659A8A /* portrait.MOV in Resources */ = {isa = PBXBuildFile; fileRef = 8E9333302742573A00659A8A /* portrait.MOV */; };
 		8E9333332742599800659A8A /* landscapeRight.MOV in Resources */ = {isa = PBXBuildFile; fileRef = 8E9333322742599800659A8A /* landscapeRight.MOV */; };
+		8EE9CEB027532BD800925D6F /* MMAssetExporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8EE9CEAF27532BD800925D6F /* MMAssetExporter.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -82,6 +83,7 @@
 		8E93332E27410AD400659A8A /* landscapeLeft.MOV */ = {isa = PBXFileReference; lastKnownFileType = video.quicktime; path = landscapeLeft.MOV; sourceTree = "<group>"; };
 		8E9333302742573A00659A8A /* portrait.MOV */ = {isa = PBXFileReference; lastKnownFileType = video.quicktime; path = portrait.MOV; sourceTree = "<group>"; };
 		8E9333322742599800659A8A /* landscapeRight.MOV */ = {isa = PBXFileReference; lastKnownFileType = video.quicktime; path = landscapeRight.MOV; sourceTree = "<group>"; };
+		8EE9CEAF27532BD800925D6F /* MMAssetExporter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MMAssetExporter.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -144,6 +146,7 @@
 				8E8620C22738C58C006BBA59 /* AVAssetTrackTest.swift */,
 				8E8620C4273A47A8006BBA59 /* AVCompositionTest.swift */,
 				8E8620C6273BBD09006BBA59 /* VideoEditHelper.swift */,
+				8EE9CEAF27532BD800925D6F /* MMAssetExporter.swift */,
 				8E8620CA273BCD3C006BBA59 /* FileHelper.swift */,
 				8E748192272B9D4600B593FF /* source */,
 				8E8620CC273D148B006BBA59 /* VideoComposition-AV-Bridging-Header.h */,
@@ -329,6 +332,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				8E7481612727EB7500B593FF /* ViewController.swift in Sources */,
+				8EE9CEB027532BD800925D6F /* MMAssetExporter.swift in Sources */,
 				8E8620C32738C58C006BBA59 /* AVAssetTrackTest.swift in Sources */,
 				8E8620CB273BCD3C006BBA59 /* FileHelper.swift in Sources */,
 				8E74815D2727EB7500B593FF /* AppDelegate.swift in Sources */,
