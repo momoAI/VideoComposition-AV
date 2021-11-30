@@ -24,8 +24,8 @@ class MMAssetExporter {
     private var videoInput: AVAssetWriterInput!
     private var audioInput: AVAssetWriterInput!
     
-    let inputQueue = DispatchQueue(label: "VideoInputQueue")
-    let writeGroup = DispatchGroup()
+    private let inputQueue = DispatchQueue(label: "VideoInputQueue")
+    private let writeGroup = DispatchGroup()
     
     public var composition: AVComposition!
     public var videoComposition: AVVideoComposition!
@@ -132,8 +132,8 @@ class MMAssetExporter {
         
         let videoInputSettings: [String : Any] = [
             AVVideoCodecKey: AVVideoCodecType.h264,
-            AVVideoWidthKey: 720,
-            AVVideoHeightKey: 1280,
+            AVVideoWidthKey: MMAssetExporter.renderSize.width,
+            AVVideoHeightKey: MMAssetExporter.renderSize.height,
             AVVideoCompressionPropertiesKey: [
                 AVVideoAverageBitRateKey: 1000000,
                 AVVideoProfileLevelKey: AVVideoProfileLevelH264High40
@@ -288,8 +288,8 @@ class MMAssetExporter {
         self.audioMix = audioMix
         self.videoInputSettings = [
             AVVideoCodecKey: AVVideoCodecType.h264,
-            AVVideoWidthKey: 720,
-            AVVideoHeightKey: 1280,
+            AVVideoWidthKey: MMAssetExporter.renderSize.width,
+            AVVideoHeightKey: MMAssetExporter.renderSize.height,
             AVVideoCompressionPropertiesKey: [
                 AVVideoAverageBitRateKey: 1000000,
                 AVVideoProfileLevelKey: AVVideoProfileLevelH264High40
@@ -395,7 +395,59 @@ class MMAssetExporter {
     
     /// 多张图片合成视频
     public func compositeVideo(images: UIImage..., outputUrl: URL, callback: @escaping VideoResult) {
+        do {
+            writer = try AVAssetWriter(outputURL: outputUrl, fileType: .mp4)
+        } catch let e {
+            callback(false, e)
+            return
+        }
+        writer.shouldOptimizeForNetworkUse = true
         
+        videoInputSettings = [
+            AVVideoCodecKey: AVVideoCodecType.h264,
+            AVVideoWidthKey: MMAssetExporter.renderSize.width,
+            AVVideoHeightKey: MMAssetExporter.renderSize.height
+        ]
+        videoInput = AVAssetWriterInput(mediaType: .video, outputSettings: videoInputSettings)
+        let adaptor = AVAssetWriterInputPixelBufferAdaptor(assetWriterInput: videoInput, sourcePixelBufferAttributes: nil)
+        if writer.canAdd(videoInput) {
+            writer.add(videoInput)
+        }
+        writer.startWriting()
+        writer.startSession(atSourceTime: .zero)
+        
+        let pixelBuffers = images.map { image in
+            self.pixelBuffer(from: image)
+        }
+        
+        let seconds = 2 // 每张图片显示时长 s
+        let timescale = 30 // 1s 30帧
+        let frames = images.count * seconds * timescale // 总帧数
+        var frame = 0
+        videoInput.requestMediaDataWhenReady(on: inputQueue) { [weak self] in
+            guard let wself = self else {
+                callback(false, nil)
+                return
+            }
+            
+            if frame >= frames {
+                // 全部数据写入完毕
+                wself.videoInput.markAsFinished()
+                wself.writer.finishWriting {
+                    callback(true, nil)
+                }
+                return
+            }
+            
+            let imageIndex = frame / (seconds * timescale)
+            let time = CMTime(value: CMTimeValue(frame), timescale: CMTimeScale(timescale))
+            let pxData = pixelBuffers[imageIndex]
+            if let cvbuffer = pxData {
+                adaptor.append(cvbuffer, withPresentationTime: time)
+            }
+            
+            frame += 1
+        }
     }
     
     /// 解码编码 返回结果：true：SampleBuffer结束， false:SampleBuffer未结束
@@ -413,5 +465,44 @@ class MMAssetExporter {
         }
         
         return false
+    }
+    
+    fileprivate func pixelBuffer(from image: UIImage) -> CVPixelBuffer? {
+        guard let cgImage = image.cgImage else { return nil }
+        
+        let size = image.size
+        // 宽高须是4的整数倍，不然视频会出现绿边
+        let width = Int(Int(size.width / 4) * 4)
+        let height = Int(Int(size.height / 4) * 4)
+        var kcall = kCFTypeDictionaryKeyCallBacks
+        var vcall = kCFTypeDictionaryValueCallBacks
+        let emptyProperties = CFDictionaryCreate(kCFAllocatorDefault, nil, nil, CFIndex(0), &kcall, &vcall)
+        let options: [CFString : Any] = [
+            kCVPixelBufferCGImageCompatibilityKey : true,
+            kCVPixelBufferCGBitmapContextCompatibilityKey : true,
+            kCVPixelBufferIOSurfacePropertiesKey : emptyProperties ?? []
+        ]
+        var opPxbuffer: CVPixelBuffer?
+        _ = CVPixelBufferCreate(kCFAllocatorDefault, width, height, kCVPixelFormatType_32BGRA, options as CFDictionary, &opPxbuffer);
+        guard let pxbuffer = opPxbuffer else { return nil }
+        
+        CVPixelBufferLockBaseAddress(pxbuffer, CVPixelBufferLockFlags(rawValue: 0));
+        
+        let pxdata = CVPixelBufferGetBaseAddress(pxbuffer)
+        let rgbColorSpace = CGColorSpaceCreateDeviceRGB()
+        var bitmapInfo = CGImageAlphaInfo.premultipliedFirst.rawValue | CGBitmapInfo.byteOrder32Little.rawValue;
+        let hasAlpha = cgImage.alphaInfo != CGImageAlphaInfo.none
+        if (!hasAlpha) {
+            bitmapInfo = CGImageAlphaInfo.noneSkipFirst.rawValue | CGBitmapInfo.byteOrder32Little.rawValue
+        }
+        
+        // Quartz创建一个位图上下文，将要绘制的信息作为位图数据绘制到指定的内存块。
+        // 一个新的位图上下文的像素格式由三个参数决定：每个组件的位数，颜色空间，alpha选项
+        guard let context = CGContext(data: pxdata, width: width, height: height, bitsPerComponent: 8, bytesPerRow: CVPixelBufferGetBytesPerRow(pxbuffer), space: rgbColorSpace, bitmapInfo: bitmapInfo) else { return nil }
+        context.draw(cgImage, in: CGRect(x: 0, y: 0, width: size.width, height: size.height))
+        
+        CVPixelBufferUnlockBaseAddress(pxbuffer, CVPixelBufferLockFlags(rawValue: 0))
+        
+        return pxbuffer
     }
 }

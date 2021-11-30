@@ -74,7 +74,17 @@ class ViewController: UIViewController {
 //            }
 //        }
         
-        exporter.writeVideo(urls: url1, url2, url3, outputUrl: outputUrl) { succ, err in
+//        exporter.writeVideo(urls: url1, url2, url3, outputUrl: outputUrl) { succ, err in
+//            VideoEditHelper.saveVideo(outputUrl) { suc2, err2 in
+//
+//            }
+//        }
+        
+        let i1 = UIImage(named: "i1.jpeg")
+        let i2 = UIImage(named: "i2.jpeg")
+        let i3 = UIImage(named: "i3.jpeg")
+        guard let image1 = i1, let image2 = i2, let image3 = i3 else { return }
+        exporter.compositeVideo(images: image1, image2, image3, outputUrl: outputUrl) { succ, err in
             VideoEditHelper.saveVideo(outputUrl) { suc2, err2 in
 
             }
