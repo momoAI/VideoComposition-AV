@@ -27,6 +27,16 @@ class MMAssetExporter {
     let inputQueue = DispatchQueue(label: "VideoInputQueue")
     let writeGroup = DispatchGroup()
     
+    public var composition: AVComposition!
+    public var videoComposition: AVVideoComposition!
+    public var audioMix: AVAudioMix!
+    public var outputUrl: URL!
+    public var videoInputSettings: [String : Any]?
+    public var videoOutputSettings: [String : Any]?
+    public var audioInputSettings: [String : Any]?
+    public var audioOutputSettings: [String : Any]?
+    
+    
     /// 多个视频数据合成一个视频 （通过reader/writer方式）
     public func writeVideoDefult(urls: URL..., outputUrl: URL, callback: @escaping VideoResult) {
         // 创建资源集合composition及可编辑轨道
@@ -193,6 +203,7 @@ class MMAssetExporter {
         // layerInstruction 用于更改视频图层
         let vcLayerInstruction = AVMutableVideoCompositionLayerInstruction(assetTrack: videoCompositionTrack)
         var layerInstructions = [vcLayerInstruction]
+        var audioParameters: [AVMutableAudioMixInputParameters] = []
         
         var insertTime = CMTime.zero
         for url in urls {
@@ -244,6 +255,10 @@ class MMAssetExporter {
                 if let insertAudioTrack = audioTrack, let insertAudioTime = audioTimeRange {
                     do {
                         try audioCompositionTrack?.insertTimeRange(CMTimeRange(start: .zero, duration: insertAudioTime.duration), of: insertAudioTrack, at: insertTime)
+                        
+                        let adParameter = AVMutableAudioMixInputParameters(track: insertAudioTrack)
+                        adParameter.setVolume(1, at: .zero)
+                        audioParameters.append(adParameter)
                     } catch let e {
                         callback(false, e)
                         return
@@ -253,9 +268,6 @@ class MMAssetExporter {
                 insertTime = insertTime + asset.duration
             }
         }
-        
-        let videoTracks = composition.tracks(withMediaType: .video)
-        let audioTracks = composition.tracks(withMediaType: .audio)
         
         let videoComposition = AVMutableVideoComposition()
         // videoComposition必须指定 帧率frameDuration、大小renderSize
@@ -267,24 +279,36 @@ class MMAssetExporter {
         vcInstruction.layerInstructions = layerInstructions
         videoComposition.instructions = [vcInstruction]
         
-        var audioParameters: [AVMutableAudioMixInputParameters] = []
-        for audioTrack in audioTracks {
-            let adParameter = AVMutableAudioMixInputParameters(track: audioTrack)
-            adParameter.setVolume(1, at: .zero)
-            audioParameters.append(adParameter)
-            
-            do {
-                try audioCompositionTrack?.insertTimeRange(audioTrack.timeRange, of: audioTrack, at: .zero)
-            } catch let e {
-                callback(false, e)
-                return
-            }
-        }
         let audioMix = AVMutableAudioMix()
         audioMix.inputParameters = audioParameters
         
+        self.composition = composition
+        self.outputUrl = outputUrl
+        self.videoComposition = videoComposition
+        self.audioMix = audioMix
+        self.videoInputSettings = [
+            AVVideoCodecKey: AVVideoCodecType.h264,
+            AVVideoWidthKey: 720,
+            AVVideoHeightKey: 1280,
+            AVVideoCompressionPropertiesKey: [
+                AVVideoAverageBitRateKey: 1000000,
+                AVVideoProfileLevelKey: AVVideoProfileLevelH264High40
+            ]
+        ]
+        self.audioInputSettings = [
+            AVFormatIDKey: NSNumber(value: kAudioFormatMPEG4AAC),
+            AVNumberOfChannelsKey: NSNumber(value: 2),
+            AVSampleRateKey: NSNumber(value: 44100),
+            AVEncoderBitRateKey: NSNumber(value: 128000)
+        ]
         
-        // AVAssetReader
+        self .exportAsynchronously(completionHandler: callback)
+    }
+    
+    public func exportAsynchronously(completionHandler callback: @escaping VideoResult) {
+        let videoTracks = composition.tracks(withMediaType: .video)
+        let audioTracks = composition.tracks(withMediaType: .audio)
+        
         do {
             reader = try AVAssetReader(asset: composition)
         } catch let e {
@@ -294,21 +318,24 @@ class MMAssetExporter {
         reader.timeRange = CMTimeRange(start: .zero, duration: composition.duration)
         
         // AVAssetReaderOutput
-        videoOutput = AVAssetReaderVideoCompositionOutput(videoTracks: videoTracks, videoSettings: nil)
+        videoOutput = AVAssetReaderVideoCompositionOutput(videoTracks: videoTracks, videoSettings: videoOutputSettings)
         videoOutput.alwaysCopiesSampleData = false
         videoOutput.videoComposition = videoComposition
         if reader.canAdd(videoOutput) {
             reader.add(videoOutput)
         }
 
-        audioOutput = AVAssetReaderAudioMixOutput(audioTracks: audioTracks, audioSettings: nil)
+        audioOutput = AVAssetReaderAudioMixOutput(audioTracks: audioTracks, audioSettings: audioOutputSettings)
         audioOutput.alwaysCopiesSampleData = false
         audioOutput.audioMix = audioMix
         if reader.canAdd(audioOutput) {
             reader.add(audioOutput)
         }
         
-        reader.startReading()
+        if !reader.startReading() {
+            callback(false, reader.error)
+            return
+        }
         
         // -----写数据----
         // AVAssetWriter
@@ -320,21 +347,6 @@ class MMAssetExporter {
         }
         writer.shouldOptimizeForNetworkUse = true
         
-        let videoInputSettings: [String : Any] = [
-            AVVideoCodecKey: AVVideoCodecType.h264,
-            AVVideoWidthKey: 720,
-            AVVideoHeightKey: 1280,
-            AVVideoCompressionPropertiesKey: [
-                AVVideoAverageBitRateKey: 1000000,
-                AVVideoProfileLevelKey: AVVideoProfileLevelH264High40
-            ]
-        ]
-        let audioInputSettings: [String : Any] = [
-            AVFormatIDKey: NSNumber(value: kAudioFormatMPEG4AAC),
-            AVNumberOfChannelsKey: NSNumber(value: 2),
-            AVSampleRateKey: NSNumber(value: 44100),
-            AVEncoderBitRateKey: NSNumber(value: 128000)
-        ]
         // AVAssetWriterInput
         videoInput = AVAssetWriterInput(mediaType: .video, outputSettings: videoInputSettings)
         if writer.canAdd(videoInput) {
@@ -368,7 +380,7 @@ class MMAssetExporter {
                 callback(false, nil)
                 return
             }
-            
+
             if wself.encodeReadySamples(from: wself.audioOutput, to: wself.audioInput) {
                 wself.writeGroup.leave()
             }

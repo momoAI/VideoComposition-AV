@@ -76,7 +76,7 @@ class ViewController: UIViewController {
         
         exporter.writeVideo(urls: url1, url2, url3, outputUrl: outputUrl) { succ, err in
             VideoEditHelper.saveVideo(outputUrl) { suc2, err2 in
-            
+
             }
         }
     }
